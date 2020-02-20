@@ -4,12 +4,12 @@ import scala.io
 import scala.io.{BufferedSource, Source}
 
 object HashCode extends App {
-  val src: BufferedSource = Source.fromResource("e_so_many_books.txt")
+  val src: BufferedSource = Source.fromResource("a_example.txt")
 
   val indexedlines: Array[String] = src.getLines().toArray
 
   val firstLine = indexedlines(0).split(' ')
-  val totalBooks = firstLine(0)
+  val totalBooks = firstLine(0).toInt
   val totalLibs = firstLine(1)
   val totalDays = firstLine(2).toInt
 
@@ -27,8 +27,16 @@ object HashCode extends App {
       Library(id, books, signupTime.toInt, booksperDay.toInt)
   }.toSet
 
-  val result = Scoring.chooseLibrary(libraries, totalDays, List.empty[(Int, List[Int])])
-  println(result)
+  val re = List("1", "2", "3")
+
+  //589 22490
+  val result = Scoring.chooseLibrary(totalBooks, libraries, totalDays, List.empty[(Int, List[Int])])
+  val r =  result.map {
+    case (libId, bookIds) if bookIds.nonEmpty => s"$libId ${bookIds.size}\n" + bookIds.map(id => s"$id ").reduce((a, b) => a+b) + "\n"
+  }.reduce((a, b) => a+b)
+
+  val resString = s"${result.size}\n" + r
+  println(resString)
 }
 
 object Scoring {
@@ -41,15 +49,15 @@ object Scoring {
     (score, booksToProcess.flatten)
   }
 
-  def chooseLibrary(libs: Set[Library], daysLeft: Int, libOrder: List[(Int, List[Int])], seenBooks: Set[Book] = Set.empty[Book]): List[(Int, List[Int])] = {
-    if (libs.isEmpty || daysLeft == 0) {
+  def chooseLibrary(totalBooks: Int, libs: Set[Library], daysLeft: Int, libOrder: List[(Int, List[Int])], seenBooks: Set[Book] = Set.empty[Book]): List[(Int, List[Int])] = {
+    if (libs.isEmpty || daysLeft == 0 || totalBooks == seenBooks.size) {
       libOrder
     }
     else {
       val nextLib = libs.toList.map {
         lib => lib -> Scoring.scoreLibrary(lib, daysLeft, seenBooks)
       }.sortBy(_._2._1).reverse.head
-      chooseLibrary(libs - nextLib._1, daysLeft - nextLib._1.signupTime, libOrder.:+((nextLib._1.id, nextLib._2._2.map(_.id))), seenBooks ++ nextLib._2._2)
+      chooseLibrary(totalBooks, libs - nextLib._1, daysLeft - nextLib._1.signupTime, libOrder.:+((nextLib._1.id, nextLib._2._2.map(_.id))), seenBooks ++ nextLib._2._2)
     }
   }
 }
