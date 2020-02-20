@@ -1,0 +1,3 @@
+object HashCode extends App {
+
+}
