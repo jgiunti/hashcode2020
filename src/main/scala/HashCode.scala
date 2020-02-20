@@ -1,3 +1,5 @@
+import HashCode.totalDays
+
 import scala.io
 import scala.io.{BufferedSource, Source}
 
@@ -15,7 +17,7 @@ object HashCode extends App {
     case (score, index) => Book(index, score.toInt)
   }.map(b => b.id -> b).toMap
 
-  val libraries: Seq[Library] = indexedlines.drop(2).grouped(2).filter(_.length == 2).zipWithIndex.map {
+  val libraries: Set[Library] = indexedlines.drop(2).grouped(2).filter(_.length == 2).zipWithIndex.map {
     case (libLine, id) =>
       val libInfo = libLine(0).split(' ')
       val signupTime = libInfo(1)
@@ -23,12 +25,10 @@ object HashCode extends App {
       val bookLine = libLine(1).split(' ')
       val books = bookLine.map(id => booksMap(id.toInt)).toSet
       Library(id, books, signupTime.toInt, booksperDay.toInt)
-  }.toList
+  }.toSet
 
-  val initScores = libraries.map {
-    lib => lib -> Scoring.scoreLibrary(lib, totalDays)
-  }.sortBy(_._2).reverse
-  println(initScores.map(_._2))
+  val result = Scoring.chooseLibrary(libraries, totalDays, List.empty[Int])
+  println(result)
 }
 
 object Scoring {
@@ -37,6 +37,18 @@ object Scoring {
     books.take(daysLeft - library.signupTime).map {
       group => group.map(_.score).sum
     }.sum
+  }
+
+  def chooseLibrary(libs: Set[Library], daysLeft: Int, libOrder: List[Int]): List[Int] = {
+    if (libs.isEmpty) {
+      libOrder
+    }
+    else {
+      val nextLib = libs.toList.map {
+        lib => lib -> Scoring.scoreLibrary(lib, daysLeft)
+      }.sortBy(_._2).reverse.head
+      chooseLibrary(libs - nextLib._1, daysLeft - nextLib._1.signupTime, (libOrder.+:(nextLib._1.id)))
+    }
   }
 }
 
