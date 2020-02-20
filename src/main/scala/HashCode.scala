@@ -2,7 +2,7 @@ import scala.io
 import scala.io.{BufferedSource, Source}
 
 object HashCode extends App {
-  val src: BufferedSource = Source.fromResource("a_example.txt")
+  val src: BufferedSource = Source.fromResource("e_so_many_books.txt")
 
   val indexedlines: Array[String] = src.getLines().toArray
 
@@ -15,7 +15,7 @@ object HashCode extends App {
     case (score, index) => Book(index, score.toInt)
   }.map(b => b.id -> b).toMap
 
-  val libLines: Seq[Library] = indexedlines.drop(2).grouped(2).map {
+  val libraries: Seq[Library] = indexedlines.drop(2).grouped(2).filter(_.size == 2).map {
     libLine =>
       val libInfo = libLine(0).split(' ')
       val signupTime = libInfo(1)
@@ -25,8 +25,19 @@ object HashCode extends App {
       Library(books, signupTime.toInt, booksperDay.toInt)
   }.toList
 
-  
+  val score = Scoring.scoreLibrary(libraries.head, totalDays.toInt)
+  println(score)
 }
+
+object Scoring {
+  def scoreLibrary(library: Library, daysLeft: Int): Int = {
+    val books: List[List[Book]] = library.books.toList.sortBy(_.score).grouped(library.booksPerDay).toList
+    books.take(daysLeft - library.signupTime).map {
+      group => group.map(_.score).sum
+    }.sum
+  }
+}
+
 
 case class Library(books: Set[Book], signupTime: Int, booksPerDay: Int)
 case class Book(id: Int, score: Int)
