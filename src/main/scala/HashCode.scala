@@ -9,24 +9,26 @@ object HashCode extends App {
   val firstLine = indexedlines(0).split(' ')
   val totalBooks = firstLine(0)
   val totalLibs = firstLine(1)
-  val totalDays = firstLine(2)
+  val totalDays = firstLine(2).toInt
 
   val booksMap: Map[Int, Book] = indexedlines(1).split(' ').zipWithIndex.map {
     case (score, index) => Book(index, score.toInt)
   }.map(b => b.id -> b).toMap
 
-  val libraries: Seq[Library] = indexedlines.drop(2).grouped(2).filter(_.size == 2).map {
-    libLine =>
+  val libraries: Seq[Library] = indexedlines.drop(2).grouped(2).filter(_.length == 2).zipWithIndex.map {
+    case (libLine, id) =>
       val libInfo = libLine(0).split(' ')
       val signupTime = libInfo(1)
       val booksperDay = libInfo(2)
       val bookLine = libLine(1).split(' ')
       val books = bookLine.map(id => booksMap(id.toInt)).toSet
-      Library(books, signupTime.toInt, booksperDay.toInt)
+      Library(id, books, signupTime.toInt, booksperDay.toInt)
   }.toList
 
-  val score = Scoring.scoreLibrary(libraries.head, totalDays.toInt)
-  println(score)
+  val initScores = libraries.map {
+    lib => lib -> Scoring.scoreLibrary(lib, totalDays)
+  }.sortBy(_._2).reverse
+  println(initScores.map(_._2))
 }
 
 object Scoring {
@@ -39,5 +41,5 @@ object Scoring {
 }
 
 
-case class Library(books: Set[Book], signupTime: Int, booksPerDay: Int)
+case class Library(id: Int, books: Set[Book], signupTime: Int, booksPerDay: Int, var processed: Boolean = false)
 case class Book(id: Int, score: Int)
