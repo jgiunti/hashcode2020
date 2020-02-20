@@ -4,7 +4,7 @@ import scala.io
 import scala.io.{BufferedSource, Source}
 
 object HashCode extends App {
-  val src: BufferedSource = Source.fromResource("c_incunabula.txt")
+  val src: BufferedSource = Source.fromResource("f_libraries_of_the_world.txt")
 
   val indexedlines: Array[String] = src.getLines().toArray
 
