@@ -27,27 +27,29 @@ object HashCode extends App {
       Library(id, books, signupTime.toInt, booksperDay.toInt)
   }.toSet
 
-  val result = Scoring.chooseLibrary(libraries, totalDays, List.empty[Int])
+  val result = Scoring.chooseLibrary(libraries, totalDays, List.empty[(Int, List[Int])])
   println(result)
 }
 
 object Scoring {
-  def scoreLibrary(library: Library, daysLeft: Int): Int = {
-    val books: List[List[Book]] = library.books.toList.sortBy(_.score).grouped(library.booksPerDay).toList
-    books.take(daysLeft - library.signupTime).map {
+  def scoreLibrary(library: Library, daysLeft: Int, excludeBooks: Set[Book]): (Int, List[Book]) = {
+    val sortedBooks: List[List[Book]] = library.books.diff(excludeBooks).toList.sortBy(_.score).grouped(library.booksPerDay).toList
+    val booksToProcess = sortedBooks.take(daysLeft - library.signupTime)
+    val score = booksToProcess.take(daysLeft - library.signupTime).map {
       group => group.map(_.score).sum
     }.sum
+    (score, booksToProcess.flatten)
   }
 
-  def chooseLibrary(libs: Set[Library], daysLeft: Int, libOrder: List[Int]): List[Int] = {
-    if (libs.isEmpty) {
+  def chooseLibrary(libs: Set[Library], daysLeft: Int, libOrder: List[(Int, List[Int])], seenBooks: Set[Book] = Set.empty[Book]): List[(Int, List[Int])] = {
+    if (libs.isEmpty || daysLeft == 0) {
       libOrder
     }
     else {
       val nextLib = libs.toList.map {
-        lib => lib -> Scoring.scoreLibrary(lib, daysLeft)
-      }.sortBy(_._2).reverse.head
-      chooseLibrary(libs - nextLib._1, daysLeft - nextLib._1.signupTime, (libOrder.+:(nextLib._1.id)))
+        lib => lib -> Scoring.scoreLibrary(lib, daysLeft, seenBooks)
+      }.sortBy(_._2._1).reverse.head
+      chooseLibrary(libs - nextLib._1, daysLeft - nextLib._1.signupTime, libOrder.:+((nextLib._1.id, nextLib._2._2.map(_.id))), seenBooks ++ nextLib._2._2)
     }
   }
 }
