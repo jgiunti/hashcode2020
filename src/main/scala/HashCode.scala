@@ -4,7 +4,7 @@ import scala.io
 import scala.io.{BufferedSource, Source}
 
 object HashCode extends App {
-  val src: BufferedSource = Source.fromResource("a_example.txt")
+  val src: BufferedSource = Source.fromResource("c_incunabula.txt")
 
   val indexedlines: Array[String] = src.getLines().toArray
 
@@ -30,9 +30,9 @@ object HashCode extends App {
   val re = List("1", "2", "3")
 
   //589 22490
-  val result = Scoring.chooseLibrary(totalBooks, libraries, totalDays, List.empty[(Int, List[Int])])
+  val result = Scoring.chooseLibrary(totalBooks, libraries, totalDays, List.empty[(Int, List[Int])]).filter(_._2.nonEmpty)
   val r =  result.map {
-    case (libId, bookIds) if bookIds.nonEmpty => s"$libId ${bookIds.size}\n" + bookIds.map(id => s"$id ").reduce((a, b) => a+b) + "\n"
+    case (libId, bookIds) => s"$libId ${bookIds.size}\n" + bookIds.map(id => s"$id ").reduce((a, b) => a+b) + "\n"
   }.reduce((a, b) => a+b)
 
   val resString = s"${result.size}\n" + r
